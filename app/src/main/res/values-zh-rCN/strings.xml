@@ -546,5 +546,6 @@
     <string name="database_dump_title">复制数据库</string>
     <string name="database_dump_description">创建应用程序的数据库副本</string>
     <string name="database_copied">数据库已复制</string>
+	<string name="include_database">包括数据库</string>
 
 </resources>
