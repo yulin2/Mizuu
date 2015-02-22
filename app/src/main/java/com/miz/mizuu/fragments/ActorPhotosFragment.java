@@ -18,9 +18,11 @@ package com.miz.mizuu.fragments;
 
 import android.content.Context;
 import android.graphics.Bitmap.Config;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +42,7 @@ import com.miz.mizuu.R;
 import com.miz.utils.IntentUtils;
 import com.squareup.picasso.Picasso;
 
-public class ActorPhotosFragment extends Fragment {
+public class ActorPhotosFragment extends Fragment implements LoaderManager.LoaderCallbacks<Void> {
 
 	private Context mContext;
 	private int mImageThumbSize, mImageThumbSpacing;
@@ -112,7 +114,7 @@ public class ActorPhotosFragment extends Fragment {
 			}
 		});
 
-		new PhotoLoader(mContext, mActorId).execute();
+                getLoaderManager().initLoader(0, null, this);
 	}
 
 	@Override
@@ -122,6 +124,26 @@ public class ActorPhotosFragment extends Fragment {
 		if (mAdapter != null)
 			mAdapter.notifyDataSetChanged();
 	}
+
+        @Override
+        public Loader<Void> onCreateLoader(int id, Bundle args) {
+            return new PhotoLoader(mContext, mActorId);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Void> loader, Void result) {
+                if (isAdded()) {
+                        mProgressBar.setVisibility(View.GONE);
+
+                        mAdapter = new ImageAdapter(getActivity());
+                        mGridView.setAdapter(mAdapter);
+                }
+
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Void> loader) {
+        }
 
 	private class ImageAdapter extends BaseAdapter {
 
@@ -173,36 +195,28 @@ public class ActorPhotosFragment extends Fragment {
 		}
 	}
 
-	private class PhotoLoader extends AsyncTask<Void, Void, Void> {
+	private class PhotoLoader extends AsyncTaskLoader<Void> {
 
 		private final Context mContext;
 		private final String mActorId;
 
 		public PhotoLoader(Context context, String actorId) {
+                        super(context);
 			mContext = context;
 			mActorId = actorId;
 		}
 
 		@Override
-		protected void onPreExecute() {
+		protected void onStartLoading() {
 			mProgressBar.setVisibility(View.VISIBLE);
+                        forceLoad();
 		}
 
 		@Override
-		protected Void doInBackground(Void... params) {
+		public Void loadInBackground() {
 			mActor = TMDbMovieService.getInstance(mContext).getCompleteActorDetails(mActorId);
 
 			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			if (isAdded()) {
-				mProgressBar.setVisibility(View.GONE);
-				
-				mAdapter = new ImageAdapter(getActivity());
-				mGridView.setAdapter(mAdapter);
-			}
 		}
 	}
 }
